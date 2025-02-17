@@ -23,7 +23,6 @@ import com.syndicate.deployment.model.lambda.url.InvokeMode;
 		invokeMode = InvokeMode.BUFFERED
 )
 public class HelloWorld implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-
 	@Override
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
 		APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
