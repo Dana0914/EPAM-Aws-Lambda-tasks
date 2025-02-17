@@ -2,14 +2,16 @@ package com.task02;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import com.syndicate.deployment.annotations.lambda.LambdaUrlConfig;
 import com.syndicate.deployment.model.RetentionSetting;
 import com.syndicate.deployment.model.lambda.url.AuthType;
 import com.syndicate.deployment.model.lambda.url.InvokeMode;
 
+
+import java.util.Map;
 
 @LambdaHandler(
     lambdaName = "hello_world",
@@ -22,20 +24,25 @@ import com.syndicate.deployment.model.lambda.url.InvokeMode;
 		authType = AuthType.NONE,
 		invokeMode = InvokeMode.BUFFERED
 )
-public class HelloWorld implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+public class HelloWorld implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 	@Override
-	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
-		APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
+	public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
+		String method = event.getRequestContext().getHttp().getMethod();
+		String path = event.getRawPath();
 
-		if (!"GET".equals(event.getHttpMethod())) {
-			response.setStatusCode(400);
-			response.setBody("{\"message\": \"Bad request syntax or unsupported method. Request path: "
-					+ event.getPath() + ". HTTP method: " + event.getHttpMethod() + "\"}");
+		if ("GET".equalsIgnoreCase(method) && "/hello".equals(path)) {
+			return buildResponse(200, "Hello from Lambda");
 		} else {
-			response.setStatusCode(200);
-			response.setBody("{\"message\": \"Hello from Lambda\"}");
+			return buildResponse(400, "Bad request syntax or unsupported method. Request path: " + path + ". HTTP method: " + method);
 		}
-
-		return response;
 	}
+
+	private APIGatewayV2HTTPResponse buildResponse(int statusCode, String message) {
+		return APIGatewayV2HTTPResponse.builder()
+				.withStatusCode(statusCode)
+				.withHeaders(Map.of("Content-Type", "application/json"))
+				.withBody("{\"statusCode\": " + statusCode + ", \"message\": \"" + message + "\"}")
+				.build();
+	}
+
 }
